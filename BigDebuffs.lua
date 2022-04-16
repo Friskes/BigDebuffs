@@ -224,7 +224,12 @@ local defaults = {
 			buffs_other = 30,
 			snare = 25,
 		},
-		spells = {},
+		spells = {
+			[33786] = {
+				priority = 100,
+				customPriority = true,
+			},
+		},
 	},
 }
 
