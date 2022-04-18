@@ -1229,7 +1229,6 @@ function BigDebuffs:OnEnable()
 	self:RegisterEvent("UNIT_SPELLCAST_FAILED")
 
 	self.interrupts = {}
-	self.Interrupted = {}
 
 	-- Prevent OmniCC finish animations
 	if OmniCC then
@@ -1365,11 +1364,10 @@ function BigDebuffs:COMBAT_LOG_EVENT_UNFILTERED(_, ...)
 		local _, _, _, _, _, unitGUID, _, _, InterruptSpellID, _, _, InterruptedSpellID, _, _ = ...
 
 		local _, _, InterruptedIcon = GetSpellInfo(InterruptedSpellID)
-		self.Interrupted[unitGUID] = { icon = InterruptedIcon }
 
 		local changedDuration = BigDebuffs.GetDuration(unitGUID, duration)
 
-		self:UpdateInterrupt(nil, unitGUID, InterruptSpellID, changedDuration)
+		self:UpdateInterrupt(nil, unitGUID, InterruptSpellID, changedDuration, InterruptedIcon)
 	end
 
 	-- UnitChannelingInfo and event orders are not the same in WotLK as later expansions, UnitChannelingInfo will always return
@@ -1388,11 +1386,10 @@ function BigDebuffs:COMBAT_LOG_EVENT_UNFILTERED(_, ...)
 	elseif self.spellName == ArcaneMissiles then
 		InterruptedIcon = ArcaneMissilesIcon
 	end
-	self.Interrupted[destGUID] = { icon = InterruptedIcon }
 
 	local changedDuration = BigDebuffs.GetDuration(destGUID, duration)
 
-	self:UpdateInterrupt(nil, destGUID, spellid, changedDuration)
+	self:UpdateInterrupt(nil, destGUID, spellid, changedDuration, InterruptedIcon)
 end
 
 function BigDebuffs.GetDuration(GUID, duration)
@@ -1540,14 +1537,14 @@ function BigDebuffs:ClearStanceGUID(guid)
 	end
 end
 
-function BigDebuffs:UpdateInterrupt(unit, guid, spellid, duration)
+function BigDebuffs:UpdateInterrupt(unit, guid, spellid, duration, InterruptedIcon)
 	local t = GetTime()
 	-- new interrupt
 	if spellid and duration ~= nil then
 		if self.interrupts[guid] == nil then self.interrupts[guid] = {} end
 		BigDebuffs:CancelTimer(self.interrupts[guid].timer)
 		self.interrupts[guid].timer = BigDebuffs:ScheduleTimer(self.ClearInterruptGUID, 30, self, guid)
-		self.interrupts[guid][spellid] = {started = t, duration = duration}
+		self.interrupts[guid][spellid] = { started = t, duration = duration, icon = InterruptedIcon }
 	-- old interrupt expiring
 	elseif spellid and duration == nil then
 		if self.interrupts[guid] and self.interrupts[guid][spellid] and
@@ -1568,7 +1565,7 @@ function BigDebuffs:UpdateInterrupt(unit, guid, spellid, duration)
 	-- clears the interrupt after end of duration
 	if duration then
 		-- если иконка кика не будет исчезать тогда необходимо добавить ещё времени к duration
-		BigDebuffs:ScheduleTimer(self.UpdateInterrupt, duration + 0.035, self, unit, guid, spellid)
+		BigDebuffs:ScheduleTimer(self.UpdateInterrupt, duration + 0.04, self, unit, guid, spellid)
 	end
 end
 
@@ -1582,19 +1579,21 @@ function BigDebuffs:GetInterruptFor(unit)
 
 	if interrupts == nil then return end
 
-	local name, spellid, InterruptIcon, duration, endsAt
+	local name, spellid, InterruptIcon, duration, endsAt, InterruptedIcon
 
 	-- iterate over all interrupt spellids to find the one of highest duration
 	for ispellid, intdata in pairs(interrupts) do
 		if type(ispellid) == "number" then
 			local tmpstartedAt = intdata.started
 			local dur = intdata.duration
+			local intdataicon = intdata.icon
 			local tmpendsAt = tmpstartedAt + dur
 			if GetTime() > tmpendsAt then
 				self.interrupts[guid][ispellid] = nil
 			elseif endsAt == nil or tmpendsAt > endsAt then
 				endsAt = tmpendsAt
 				duration = dur
+				InterruptedIcon = intdataicon
 				name, _, InterruptIcon = GetSpellInfo(ispellid)
 				spellid = ispellid
 			end
@@ -1603,7 +1602,7 @@ function BigDebuffs:GetInterruptFor(unit)
 
 	if name then
 		if self.db.profile.unitFrames.interruptIcon then
-			return name, spellid, self.Interrupted[guid].icon, duration, endsAt
+			return name, spellid, InterruptedIcon, duration, endsAt
 		else
 			return name, spellid, InterruptIcon, duration, endsAt
 		end
