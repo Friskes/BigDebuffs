@@ -1376,7 +1376,7 @@ function BigDebuffs:COMBAT_LOG_EVENT_UNFILTERED(_, ...)
 	-- this "could" be wrong if the interrupt misses with a <0.01 sec failure window (which depending on server tickrate might
 	-- not even be possible)
 	if subEvent == "SPELL_CAST_SUCCESS" and not (self.interrupts[destGUID] and self.interrupts[destGUID].failed
-	and GetTime() - self.interrupts[destGUID].failed < 0.001) then return end -- если будет отображать фейк кик то необходимо уменьшить число
+	and GetTime() - self.interrupts[destGUID].failed < 0.0009) then return end -- если будет отображать фейк кик то необходимо уменьшить число
 																			  -- если не будет отображать кик впринципе то необходимо увеличить число
 	if self.spellName ~= Penance and self.spellName ~= ArcaneMissiles then return end
 
@@ -1565,7 +1565,7 @@ function BigDebuffs:UpdateInterrupt(unit, guid, spellid, duration, InterruptedIc
 	-- clears the interrupt after end of duration
 	if duration then
 		-- если иконка кика не будет исчезать тогда необходимо добавить ещё времени к duration
-		BigDebuffs:ScheduleTimer(self.UpdateInterrupt, duration + 0.04, self, unit, guid, spellid)
+		BigDebuffs:ScheduleTimer(self.UpdateInterrupt, duration + 0.05, self, unit, guid, spellid)
 	end
 end
 
