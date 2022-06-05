@@ -97,7 +97,7 @@ local defaults = {
 				buffs_defensive = false,
 				buffs_offensive = false,
 				buffs_other = false,
-				snare = false,
+				snare = true,
 			},
 			target = {
 				enabled = true,
