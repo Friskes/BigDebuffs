@@ -195,7 +195,7 @@ local defaults = {
 				snare = false,
 			},
 			arenapet = {
-				enabled = false,
+				enabled = true,
 				anchor = "auto",
 				size = 50,
 				alpha = 1,
@@ -857,13 +857,18 @@ local anchors = {
 			party4       = "XPerl_party4portraitFrame",
 		},
 	},
-	["Gladius"] = { -- просто так прицепиться не выйдет, необходимо создать фрейм в самом гладиусе.
+	["Gladius"] = { -- просто так прицепиться не выйдет, необходимо создавать фреймы в самом гладиусе.
 		units = {
-			arena1 = "GladiusButtonFrame1ClassIcon",
-			arena2 = "GladiusButtonFrame2ClassIcon",
-			arena3 = "GladiusButtonFrame3ClassIcon",
-			arena4 = "GladiusButtonFrame4ClassIcon",
-			arena5 = "GladiusButtonFrame5ClassIcon",
+			arena1    = "GladiusButtonFrame1ClassIcon",
+			arena2    = "GladiusButtonFrame2ClassIcon",
+			arena3    = "GladiusButtonFrame3ClassIcon",
+			arena4    = "GladiusButtonFrame4ClassIcon",
+			arena5    = "GladiusButtonFrame5ClassIcon",
+			arenapet1 = "GladiusPetButtonFrame1petIcon",
+			arenapet2 = "GladiusPetButtonFrame2petIcon",
+			arenapet3 = "GladiusPetButtonFrame3petIcon",
+			arenapet4 = "GladiusPetButtonFrame4petIcon",
+			arenapet5 = "GladiusPetButtonFrame5petIcon",
 		},
 	},
 	["Blizzard"] = {
@@ -1091,7 +1096,9 @@ function BigDebuffs:AttachUnitFrame(unit)
 
 	if frame.anchor then
 
-		frame.timer:SetFont(SML:Fetch(SML.MediaType.FONT, config.font), frame.anchor:GetHeight() / config.customTimerSize, config.outline)
+		if frame.anchor:GetHeight() ~= 0 then
+			frame.timer:SetFont(SML:Fetch(SML.MediaType.FONT, config.font), frame.anchor:GetHeight() / config.customTimerSize, config.outline)
+		end
 
 		if frame.blizzard then
 			-- Blizzard Frame
