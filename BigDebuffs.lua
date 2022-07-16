@@ -1951,6 +1951,9 @@ end
 
 function BigDebuffs:UNIT_PET()
 	self:UNIT_AURA(nil, "pet")
+	for i=1, 5 do
+		self:UNIT_AURA(nil, 'arenapet'..i)
+	end
 end
 
 function BigDebuffs:PARTY_MEMBERS_CHANGED()
