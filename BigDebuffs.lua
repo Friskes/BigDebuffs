@@ -19,6 +19,7 @@ local GetTime = GetTime
 local UIParent = UIParent
 local InCombatLockdown = InCombatLockdown
 local LoadAddOn = LoadAddOn
+local GetAddOnMetadata = GetAddOnMetadata
 local GetSpellInfo = GetSpellInfo
 local SetPortraitToTexture = SetPortraitToTexture
 local UnitDebuff, UnitBuff = UnitDebuff, UnitBuff
@@ -1238,7 +1239,7 @@ function BigDebuffs:OnEnable()
 	self.interrupts = {}
 
 	-- Prevent OmniCC finish animations
-	if OmniCC then
+	if OmniCC and GetAddOnMetadata("OmniCC", "Version") > "2.5.8" then
 		self:RawHook(OmniCC, "TriggerEffect", function(object, cooldown)
 			local name = cooldown:GetName()
 			if name and name:find("BigDebuffs") then return end
