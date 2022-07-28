@@ -51,7 +51,7 @@ local defaults = {
 				enabled = true,
 				inArena = false,
 				duplicatePlayer = true,
-				reduceSnare = true,
+				-- reduceSnare = true,
 				anchor = "manual",
 				position = {
 					"CENTER",
@@ -72,7 +72,7 @@ local defaults = {
 				buffs_defensive = false,
 				buffs_offensive = false,
 				buffs_other = false,
-				snare = true,
+				snare = false,
 			},
 			playerFAKE = {
 			},
@@ -1654,33 +1654,33 @@ function BigDebuffs:UNIT_AURA(event, unit)
 			if self.Spells[n] or self.Spells[id] then
 				local p = self:GetAuraPriority(n, id, unit)
 
-				if unit == 'player'
-				and self.db.profile.unitFrames[unit:gsub("%d", "")].reduceSnare
-				and self.db.profile.unitFrames[unit:gsub("%d", "")].anchor == "manual" then
+				-- if unit == 'player'
+				-- and self.db.profile.unitFrames[unit:gsub("%d", "")].reduceSnare
+				-- and self.db.profile.unitFrames[unit:gsub("%d", "")].anchor == "manual" then
 
-					if self.Spells[id].type == 'snare'
-					or self.Spells[id].parent ~= nil
-					and self.Spells[self.Spells[id].parent].type == 'snare' then
+				-- 	if self.Spells[id].type == 'snare'
+				-- 	or self.Spells[id].parent ~= nil
+				-- 	and self.Spells[self.Spells[id].parent].type == 'snare' then
 
-						-- if spellType == 'Magic' then
-						-- 	print('Magic')
-						-- elseif spellType == 'Disease' then
-						-- 	print('Disease')
-						-- elseif not spellType then
-						-- 	print('Physic')
-						-- end
+				-- 		-- if spellType == 'Magic' then
+				-- 		-- 	print('Magic')
+				-- 		-- elseif spellType == 'Disease' then
+				-- 		-- 	print('Disease')
+				-- 		-- elseif not spellType then
+				-- 		-- 	print('Physic')
+				-- 		-- end
 
-						local frame_size = self.db.profile.unitFrames[unit:gsub("%d", "")].size / 1.466
-						local frame = self.UnitFrames[unit]
-						frame:SetSize(frame_size, frame_size)
-						frame.cooldownContainer:SetSize(frame_size, frame_size)
-					else
-						local frame_size = self.db.profile.unitFrames[unit:gsub("%d", "")].size
-						local frame = self.UnitFrames[unit]
-						frame:SetSize(frame_size, frame_size)
-						frame.cooldownContainer:SetSize(frame_size, frame_size)
-					end
-				end
+				-- 		local frame_size = self.db.profile.unitFrames[unit:gsub("%d", "")].size / 1.466
+				-- 		local frame = self.UnitFrames[unit]
+				-- 		frame:SetSize(frame_size, frame_size)
+				-- 		frame.cooldownContainer:SetSize(frame_size, frame_size)
+				-- 	else
+				-- 		local frame_size = self.db.profile.unitFrames[unit:gsub("%d", "")].size
+				-- 		local frame = self.UnitFrames[unit]
+				-- 		frame:SetSize(frame_size, frame_size)
+				-- 		frame.cooldownContainer:SetSize(frame_size, frame_size)
+				-- 	end
+				-- end
 
 				if p and p > priority or p == priority and e - now > left then
 					left = e - now

@@ -337,14 +337,14 @@ function BigDebuffs:SetupOptions()
 								width = "normal",
 								desc = L["Duplicate player tooltip"],
 							},
-							reduceSnare = {
-								type = "toggle",
-								disabled = function(info) local name = info[2] return not self.db.profile.unitFrames[name].enabled or self.db.profile.unitFrames[name].anchor == "auto" end,
-								name = L["Reduce snare"],
-								order = 7,
-								width = "normal",
-								desc = L["Reduce icon size for snare category for manual anchor"],
-							},
+							-- reduceSnare = {
+							-- 	type = "toggle",
+							-- 	disabled = function(info) local name = info[2] return not self.db.profile.unitFrames[name].enabled or self.db.profile.unitFrames[name].anchor == "auto" end,
+							-- 	name = L["Reduce snare"],
+							-- 	order = 7,
+							-- 	width = "normal",
+							-- 	desc = L["Reduce icon size for snare category for manual anchor"],
+							-- },
 							spells = {
 								order = 8,
 								name = L["Spells"],
