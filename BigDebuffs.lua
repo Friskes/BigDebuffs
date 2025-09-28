@@ -28,6 +28,9 @@ local GetUnitName = GetUnitName
 
 local InArena = function() return (select(2,IsInInstance() ) == "arena") end
 
+-- Константа для цвета рамки прерываний по умолчанию
+local DEFAULT_INTERRUPT_BORDER_COLOR = {1, 0, 0, 1} -- (R, G, B, A)
+
 local timeThreshold
 
 -- Defaults
@@ -917,6 +920,16 @@ function BigDebuffs:OnInitialize()
 	self:SetupOptions()
 end
 
+function BigDebuffs:RefreshInterruptBorders()
+    -- Обновление цвета рамки прерываний
+    local color = self.db.profile.unitFrames.interruptBorderColor or DEFAULT_INTERRUPT_BORDER_COLOR
+    for unit, frame in pairs(self.UnitFrames) do
+        if frame.interruptBorder then
+            frame.interruptBorder:SetVertexColor(color[1], color[2], color[3], color[4])
+        end
+    end
+end
+
 function BigDebuffs:Refresh()
 	for unit, frame in pairs(self.UnitFrames) do
 		frame:Hide()
@@ -924,6 +937,7 @@ function BigDebuffs:Refresh()
 		self:AttachUnitFrame(unit)
 		self:UNIT_AURA(nil, unit)
 	end
+    self:RefreshInterruptBorders()
 end
 
 --[[local unitsToUpdate = {}
@@ -958,6 +972,27 @@ function BigDebuffs:AttachUnitFrame(unit)
 		frame.CircleCooldown = CreateFrame("Frame", frameName .. "CircleCooldown", frame, "CircleCooldownFrameTemplate")
 		frame.CircleCooldown:SetParent(frame.cooldownContainer)
 		frame.CircleCooldown:SetFrameLevel(frame.cooldownContainer:GetParent():GetFrameLevel() + 1)
+
+        frame.interruptBorder = frame:CreateTexture(frameName .. "InterruptBorder", "OVERLAY")
+        frame.interruptBorder:SetTexture("Interface\\Buttons\\UI-Debuff-Border")
+
+        -- Проверяем, является ли фрейм связан с ареной (Gladius)
+        local isArenaFrame = unit:match("arena%d") ~= nil
+        local useGladiusFrame = self.db.profile.unitFrames.arenaFrames and isArenaFrame
+
+        if useGladiusFrame then
+            -- Специальные настройки для Gladius arena фреймов
+            local offset = 12 -- Больший отступ для масштабирования рамки
+            frame.interruptBorder:SetPoint("TOPLEFT", frame, "TOPLEFT", -offset, offset)
+            frame.interruptBorder:SetPoint("BOTTOMRIGHT", frame, "BOTTOMRIGHT", offset, -offset)
+        else
+            -- Стандартные настройки для всех остальных фреймов
+            frame.interruptBorder:SetAllPoints(frame)
+        end
+
+        frame.interruptBorder:SetTexCoord(0, 1, 0, 1)
+        frame.interruptBorder:SetVertexColor(DEFAULT_INTERRUPT_BORDER_COLOR[1], DEFAULT_INTERRUPT_BORDER_COLOR[2], DEFAULT_INTERRUPT_BORDER_COLOR[3], DEFAULT_INTERRUPT_BORDER_COLOR[4])
+        frame.interruptBorder:Hide()
 		frame.CircleCooldown:SetDrawBling(false) -- отключение анимации вспышки после завершения кд
 		frame.CircleCooldown:SetAllPoints()
 
@@ -1225,6 +1260,19 @@ local function UnitDebuffTest(unit, index)
 	return GetSpellInfo(debuff[1]), nil, debuff[2], 0, "Magic", 30, GetTime() + 30, nil, nil, nil, debuff[1]
 end
 
+function BigDebuffs:FindSpellID(spellName)
+    -- Ищем ID заклинания по его имени
+    for id, spell in pairs(self.Spells) do
+        if type(id) == "number" then
+            local name = GetSpellInfo(id)
+            if name and name == spellName then
+                return id
+            end
+        end
+    end
+    return nil
+end
+
 function BigDebuffs:OnEnable()
 	self:RegisterEvent("PLAYER_FOCUS_CHANGED")
 	self:RegisterEvent("PLAYER_TARGET_CHANGED")
@@ -1249,6 +1297,11 @@ function BigDebuffs:OnEnable()
 	end
 
 	self:InsertTestDebuff(10890) -- Icon for Test Mode.
+
+    -- Инициализация настроек цвета рамки прерывания, если они не установлены
+    if not self.db.profile.unitFrames.interruptBorderColor then
+        self.db.profile.unitFrames.interruptBorderColor = DEFAULT_INTERRUPT_BORDER_COLOR
+    end
 end
 
 local CreateStancesTable = true
@@ -1643,7 +1696,7 @@ function BigDebuffs:UNIT_AURA(event, unit)
 	local UnitDebuff = BigDebuffs.test and UnitDebuffTest or UnitDebuff
 
 	local now = GetTime()
-	local left, priority, duration, expires, icon, isAura, interrupt = 0, 0
+	local left, priority, duration, expires, icon, isAura, interrupt, auraType, spellId = 0, 0
 
 	for i = 1, 40 do
 		-- Check debuffs
@@ -1689,6 +1742,8 @@ function BigDebuffs:UNIT_AURA(event, unit)
 					priority = p
 					expires = e
 					icon = ico
+					auraType = self.Spells[id].type
+					spellId = id
 				end
 			end
 		else
@@ -1712,6 +1767,8 @@ function BigDebuffs:UNIT_AURA(event, unit)
 						priority = p
 						expires = e
 						icon = ico
+						auraType = self.Spells[id].type
+						spellId = id
 					end
 				end
 			end
@@ -1730,6 +1787,8 @@ function BigDebuffs:UNIT_AURA(event, unit)
 			priority = p
 			expires = e
 			icon = ico
+			auraType = "interrupts"
+			spellId = id
 		end
 	end
 
@@ -1748,6 +1807,8 @@ function BigDebuffs:UNIT_AURA(event, unit)
 				priority = p
 				expires = 0
 				icon = ico
+				auraType = self.Spells[stanceId].type
+				spellId = stanceId
 			end
 		end
 	end
@@ -1895,6 +1956,44 @@ function BigDebuffs:UNIT_AURA(event, unit)
 			else
 				frame.icon:SetTexture(icon)
 			end
+
+            -- Проверяем, является ли активная аура прерыванием, чтобы показать рамку
+            if auraType == "interrupts" then
+                if frame.interruptBorder then
+                    local color = self.db.profile.unitFrames.interruptBorderColor or DEFAULT_INTERRUPT_BORDER_COLOR
+                    -- Если альфа-канал > 0, показываем рамку
+                    if color[4] > 0 then
+                        frame.interruptBorder:SetVertexColor(color[1], color[2], color[3], color[4])
+
+                        -- Проверяем, является ли фрейм частью Gladius
+                        local isGladiusFrame = frame:GetName() and (frame:GetName():match("arena%d") ~= nil) and unit:match("arena%d") ~= nil
+
+                        -- Сбрасываем позиционирование рамки
+                        frame.interruptBorder:ClearAllPoints()
+
+                        if isGladiusFrame then
+                            -- Специальные настройки для фреймов Gladius
+                            local scale = 1.5  -- Масштаб для Gladius фреймов
+                            frame.interruptBorder:SetWidth(frame:GetWidth() * scale)
+                            frame.interruptBorder:SetHeight(frame:GetHeight() * scale)
+                            frame.interruptBorder:SetPoint("CENTER", frame, "CENTER", 0, 0)
+                        else
+                            -- Стандартные настройки для остальных фреймов
+                            frame.interruptBorder:SetWidth(frame:GetWidth() * 1.1)
+                            frame.interruptBorder:SetHeight(frame:GetHeight() * 1.1)
+                            frame.interruptBorder:SetPoint("CENTER", frame, "CENTER", 0, 0)
+                        end
+
+                        frame.interruptBorder:Show()
+                    else
+                        frame.interruptBorder:Hide()
+                    end
+                end
+            else
+                if frame.interruptBorder then
+                    frame.interruptBorder:Hide()
+                end
+            end
 		--end
 
 		if duration > 0.2 then
@@ -1930,6 +2029,8 @@ function BigDebuffs:UNIT_AURA(event, unit)
 
 		frame:Show()
 		frame.current = icon
+		frame.currentAuraType = auraType
+		frame.currentSpellId = spellId
 	else
 		-- Adapt
 		if frame.anchor and frame.blizzard and Adapt and Adapt.portraits[frame.anchor] then
@@ -1937,6 +2038,12 @@ function BigDebuffs:UNIT_AURA(event, unit)
 		else
 			frame:Hide()
 			frame.current = nil
+			frame.currentAuraType = nil
+			frame.currentSpellId = nil
+			-- Скрываем рамку прерывания, когда иконка скрывается
+			if frame.interruptBorder then
+				frame.interruptBorder:Hide()
+			end
 		end
 	end
 end

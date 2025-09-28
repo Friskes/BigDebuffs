@@ -1,6 +1,9 @@
 local BigDebuffs = LibStub("AceAddon-3.0"):GetAddon("BigDebuffs")
 local L = LibStub("AceLocale-3.0"):GetLocale("BigDebuffs")
 
+-- Константа для цвета рамки прерываний по умолчанию (должна совпадать с константой в BigDebuffs.lua)
+local DEFAULT_INTERRUPT_BORDER_COLOR = {0, 0.7, 1, 1} -- Голубой цвет (R, G, B, A)
+
 local AceDialog
 
 local select, pairs = select, pairs
@@ -243,6 +246,22 @@ function BigDebuffs:SetupOptions()
 								desc = L["Show interrupted spell icon instead of interrupt spell icon"],
 								order = 8,
 							},
+							interruptBorderColor = {
+								type = "color",
+								width = "normal",
+								name = L["Interrupt Border Color"],
+								desc = L["Set the color for the interrupt border"],
+								hasAlpha = true,
+								get = function(info)
+									local c = BigDebuffs.db.profile.unitFrames.interruptBorderColor or DEFAULT_INTERRUPT_BORDER_COLOR
+									return c[1], c[2], c[3], c[4]
+								end,
+								set = function(info, r, g, b, a)
+									BigDebuffs.db.profile.unitFrames.interruptBorderColor = {r, g, b, a}
+									BigDebuffs:RefreshInterruptBorders()
+								end,
+								order = 9,
+							},
 							timeThreshold = {
 								type = "range",
 								name = L["Time Threshold"],
@@ -250,7 +269,7 @@ function BigDebuffs:SetupOptions()
 								min = 0,
 								max = 60,
 								step = 1,
-								order = 9,
+								order = 10,
 							},
 							customTimerSize = {
 								type = "range",
@@ -259,7 +278,7 @@ function BigDebuffs:SetupOptions()
 								min = 1.9,
 								max = 6,
 								step = 0.1,
-								order = 10,
+								order = 11,
 							},
 							font = {
 								type = "select",
@@ -267,14 +286,14 @@ function BigDebuffs:SetupOptions()
 								desc = L["Choose font for the custom timer"],
 								dialogControl = "LSM30_Font",
 								values = getMediaData,
-								order = 11,
+								order = 12,
 							},
 							outline = {
 								type = "select",
 								name = L["Outline"],
 								desc = L["Choose font outline for the custom timer"],
 								values = {["OUTLINE"] = L["Thin outline"], ["THICKOUTLINE"] = L["Thick outline"], [""] = L["Shadow"]},
-								order = 12,
+								order = 13,
 							},
 						},
 					},
